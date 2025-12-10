@@ -16,4 +16,4 @@ generatorOptions:
 
 resources:
   - backend/backend-deployment.yaml
-  - frontend/frontend-deployment.yaml
+  - frontend-2/frontend-deployment.yaml
