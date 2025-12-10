@@ -57,7 +57,6 @@ $ bash ./scripts/build-helper.sh kind
 Before proceeding, review the following:
 
 * You'll need access to the Kubernetes environment configured when going through the [SPIRE Envoy-X.509 Tutorial](../envoy-x509/README.md). Optionally, you can create the Kubernetes environment with the `pre-set-env.sh` script described just below.
-* Required YAML files for this tutorial can be found in the `k8s/envoy-jwt` directory in https://github.com/spiffe/spire-tutorials. If you didn't already clone the repo for the _SPIRE Envoy-X.509 Tutorial_ please do so now.
 
 If the Kubernetes _SPIRE Envoy-X.509 Tutorial_ environment is not available, you can use the following script to create it and use it as starting point for this tutorial.
 From the `k8s/envoy-jwt` directory, run the following command:
@@ -81,41 +80,8 @@ The Envoy JWT Auth Helper (`auth-helper` service) is a simple gRPC service that 
 
 For every HTTP request sent to the Envoy forward proxy, Envoy JWT Auth Helper obtains a JWT-SVID from the SPIRE Agent and injects it as a new request header, which is sent to Envoy. On the other side, when the HTTP request arrives at the reverse proxy, the Envoy External Authorization module sends the request to the Envoy JWT Auth Helper which extracts the JWT-SVID from the header and connects to the SPIRE Agent to perform the validation. Once validated, the request is sent back to Envoy. If validation fails, the request is denied.
 
-Internally, Envoy JWT Auth Helper takes advantage of the [go-spiffe](https://github.com/spiffe/go-spiffe/) library which exposes all the necessary functions to fetch and validate JWT SVIDs. Here are the most relevant pieces of code:
 
 
-```console
-// Create options to configure Sources using the Unix domain socket provided by SPIRE.
-clientOptions := workloadapi.WithClientOptions(workloadapi.WithAddr(c.SocketPath))
-
-...
-
-// Creates a workloadapi.JWTSource instance to obtain up-to-date JWT bundles from the Workload API.
-jwtSource, err := workloadapi.NewJWTSource(context.Background(), clientOptions)
-if err != nil {
-   log.Fatalf("Unable to create JWTSource: %v", err)
-}
-defer jwtSource.Close()
-
-...
-
-// Fetches JWT-SVIDs that will be added to a request header.
-jwtSVID, err := a.config.jwtSource.FetchJWTSVID(ctx, jwtsvid.Params{
-   Audience: a.config.audience,
-})
-if err != nil {
-   return forbiddenResponse("PERMISSION_DENIED"), nil
-}
-
-...
-
-// Parse and validate token against fetched bundle from jwtSource.
-_, err := jwtsvid.ParseAndValidate(token, a.config.jwtSource, []string{a.config.audience})
-
-if err != nil {
-   return forbiddenResponse("PERMISSION_DENIED"), nil
-}
-```
 Note: `workloadapi` and `jwtsvid` are imported from the `go-spiffe` library.
 
 ## Update Deployments
@@ -163,7 +129,10 @@ http_filters:
         cluster_name: ext-authz
       timeout: 0.5s
 ```
+kubectl get configmap frontend-envoy -o yaml > /tmp/frontend-envoy.yaml
 
+# Edit the file
+nano /tmp/frontend-envoy.yaml
 Here’s the corresponding cluster configuration for the External Authorization Filter:
 
 ``` console
@@ -185,14 +154,6 @@ Here’s the corresponding cluster configuration for the External Authorization 
 
 ## Apply the New Resources
 
-The services need to be redeployed for the new configuration to take effect. Let's remove the `backend` and `frontend` deployments so we can update them:
-
-```console
-$ kubectl delete deployment backend
-$ kubectl delete deployment frontend-2
-```
-
-Ensure that the current working directory is `.../spire-tutorials/k8s/envoy-jwt` and deploy the new resources using:
 
 ```console
 $ kubectl apply -k k8s/.
@@ -273,7 +234,7 @@ On the other hand, when you connect to the URL for the `frontend-2` service (e.g
 Let's take a look at the `auth-helper` container logs to see what is happening behind the scenes. The following are the logs for the `auth-helper` instance running next to the `frontend` service. In this case, the `auth-helper` server is configured to run in inject mode. For every request, it will inject the JWT-SVID as a new request header and return it to the Envoy instance that will forward it to the `backend`.
 
 ```console
-$ kubectl logs -f --selector=app=frontend -c auth-helper
+$ kubectl logs -f --selector=app=frontend-2 -c auth-helper
 JWT-SVID injected. Sending response with 1 new headers
 ```
 
