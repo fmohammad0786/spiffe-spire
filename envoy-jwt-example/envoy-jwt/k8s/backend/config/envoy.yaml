@@ -1,0 +1,47 @@
+clusters:
+  - name: backend_cluster  # or whatever name you're using
+    connect_timeout: 1s
+    type: STRICT_DNS
+    dns_lookup_family: V4_ONLY
+    dns_refresh_rate: 5s
+    load_assignment:  
+      cluster_name: backend_cluster
+      endpoints:  
+      - lb_endpoints:  
+        - endpoint:  
+            address:  
+              socket_address:  
+                address: backend-envoy.default.svc.cluster.local  # Use FQDN
+                port_value: 9001
+    # Add mTLS if using SPIRE for backend communication
+    transport_socket:
+      name: envoy.transport_sockets.tls
+      typed_config:
+        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+        common_tls_context:
+          tls_certificate_sds_secret_configs:
+          - name: "spiffe://bb-team.org/ns/default/sa/default/frontend-2"
+            sds_config:
+              resource_api_version: V3
+              api_config_source:
+                api_type: GRPC
+                transport_api_version: V3
+                grpc_services:
+                  envoy_grpc:
+                    cluster_name: spire_agent
+          combined_validation_context:
+            default_validation_context:
+              match_typed_subject_alt_names:
+              - san_type: URI
+                matcher:
+                  exact: "spiffe://bb-team.org/ns/default/sa/default"
+            validation_context_sds_secret_config:
+              name: "spiffe://bb-team.org"
+              sds_config:
+                resource_api_version: V3
+                api_config_source:
+                  api_type: GRPC
+                  transport_api_version: V3
+                  grpc_services:
+                    envoy_grpc:
+                      cluster_name: spire_agent

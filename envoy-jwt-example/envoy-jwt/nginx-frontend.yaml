@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-2
+  labels:
+    app: frontend-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-2
+  template:
+    metadata:
+      labels:
+        app: frontend-2
+    spec:
+      containers:
+      - name: envoy
+        image: envoyproxy/envoy:v1.25.1
+        imagePullPolicy: Always
+        args: ["-l", "debug", "--local-address-ip-version", "v4", "-c", "/run/envoy/envoy.yaml", "--base-id", "1"]
+        volumeMounts:
+        - name: envoy-config
+          mountPath: "/run/envoy"
+          readOnly: true
+        - name: spire-agent-socket
+          mountPath: /run/spire/sockets
+          readOnly: true
+      - name: auth-helper
+        image: envoy-jwt-auth-helper:latest
+        imagePullPolicy: IfNotPresent
+        args:  ["-config", "/run/envoy-jwt-auth-helper/config/envoy-jwt-auth-helper.conf"]
+        ports:
+        - containerPort: 9011
+        volumeMounts:
+        - name: envoy-jwt-auth-helper-config
+          mountPath: "/run/envoy-jwt-auth-helper/config"
+          readOnly: true
+        - name: spire-agent-socket
+          mountPath: /run/spire/sockets
+          readOnly: true
+      - name: frontend
+        image: nginx:alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+      volumes:
+      - name: envoy-config
+        configMap:
+          name: frontend-envoy
+      - name: spire-agent-socket
+        hostPath:
+          path: /run/spire/sockets
+          type: DirectoryOrCreate
+      - name: envoy-jwt-auth-helper-config
+        configMap:
+          name: fe-envoy-jwt-auth-helper-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-2
+spec:
+  selector:
+    app: frontend-2
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer
+
