@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-spiffe-demo
+  labels:
+    app: nginx-spiffe-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-spiffe-demo
+  template:
+    metadata:
+      labels:
+        app: nginx-spiffe-demo
+    spec:
+      hostPID: true
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: spire-agent-socket
+              mountPath: /run/spire/sockets
+              readOnly: true
+
+        - name: spiffe-client
+          image: ghcr.io/spiffe/spire-agent:1.5.1
+          command: ["/opt/spire/bin/spire-agent"]
+          args:
+            [
+              "api",
+              "watch",
+              "-socketPath",
+              "/run/spire/sockets/agent.sock"
+            ]
+          volumeMounts:
+            - name: spire-agent-socket
+              mountPath: /run/spire/sockets
+              readOnly: true
+
+      volumes:
+        - name: spire-agent-socket
+          hostPath:
+            path: /run/spire/sockets
+            type: Directory
+
