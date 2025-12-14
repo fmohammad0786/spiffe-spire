@@ -1,0 +1,77 @@
+# Switch to Cluster A
+kubectl config use-context bb-team-cluster
+
+# Update the image in the YAML with your registry
+# Then apply
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-app
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: server-a
+  namespace: test-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-a
+  namespace: test-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: server-a
+  template:
+    metadata:
+      labels:
+        app: server-a
+    spec:
+      serviceAccountName: server-a
+      containers:
+      - name: server
+        image: firoj0786/spiffe-test-server:v1
+        ports:
+        - containerPort: 8443
+          name: https
+        env:
+        - name: SPIFFE_ENDPOINT_SOCKET
+          value: unix:///run/spire/sockets/agent.sock
+        volumeMounts:
+        - name: spire-agent-socket
+          mountPath: /run/spire/sockets
+          readOnly: true
+      volumes:
+      - name: spire-agent-socket
+        hostPath:
+          path: /run/spire/sockets
+          type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-a
+  namespace: test-app
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8443
+    targetPort: 8443
+    protocol: TCP
+    name: https
+  selector:
+    app: server-a
+EOF
+
+# Wait for the service to get an external IP
+kubectl get svc -n test-app server-a -w
+
+# Note the EXTERNAL-IP for use in clients
+CLUSTER_A_IP=$(kubectl get svc -n test-app server-a -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+echo "Cluster A Server IP: $CLUSTER_A_IP"
+
+# Check server logs
+kubectl logs -n test-app -l app=server-a -f
