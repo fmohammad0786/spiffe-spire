@@ -3,3 +3,26 @@ kind: ConfigMap
 metadata:
   name: spire-bundle
   namespace: spire
+data:
+  bundle.crt: |
+    {
+        "keys": [
+            {
+                "use": "x509-svid",
+                "kty": "RSA",
+                "n": "z4K0octneqS-5I6JT9jvMogsnUH7SD6PAArmJPDlGWAGZBF1L-LySMt1CLDAqkvU8TYkauDrg7CgsEXBUdy0qXjnm8BlqNdOG1KQT3sy-valTnhLfxfHj6RtAx2o-GRZ5n99dlaGxLTiEIuCsxmDVaE0xGgaijewsoeu2tpXXWTnAoFr6WJHs9h2clxPNnk7t8RYYzR-cahxYdqjIWCUeqTREpEwWKBBb_CFKpv1FOzjGVBpgEpR6YBD9HMhlwF7sX8GEXuKd05-0VmAdVKrzzZkWpawpbSOyxngPe6rX4Gnq3NtrH3K6YdfFvx3_AeT9qbzvtUhZOU0ZV2TQ33ofw",
+                "e": "AQAB",
+                "x5c": [
+                    "MIIDjjCCAnagAwIBAgIQZWatVf2VARn9JP4nt091fDANBgkqhkiG9w0BAQsFADBQMQswCQYDVQQGEwJVUzEPMA0GA1UEChMGU1BJRkZFMTAwLgYDVQQFEycxMzQ3ODUxNTc1MjM1ODIxNDM2NjY1NDU2MTI3MjM2NzgzMTE4MDQwHhcNMjUxMjE2MDcwNzM2WhcNMjUxMjE3MDcwNzQ2WjBQMQswCQYDVQQGEwJVUzEPMA0GA1UEChMGU1BJRkZFMTAwLgYDVQQFEycxMzQ3ODUxNTc1MjM1ODIxNDM2NjY1NDU2MTI3MjM2NzgzMTE4MDQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDPgrShy2d6pL7kjolP2O8yiCydQftIPo8ACuYk8OUZYAZkEXUv4vJIy3UIsMCqS9TxNiRq4OuDsKCwRcFR3LSpeOebwGWo104bUpBPezL69qVOeEt/F8ePpG0DHaj4ZFnmf312VobEtOIQi4KzGYNVoTTEaBqKN7Cyh67a2lddZOcCgWvpYkez2HZyXE82eTu3xFhjNH5xqHFh2qMhYJR6pNESkTBYoEFv8IUqm/UU7OMZUGmASlHpgEP0cyGXAXuxfwYRe4p3Tn7RWYB1UqvPNmRalrCltI7LGeA97qtfgaerc22sfcrph18W/Hf8B5P2pvO+1SFk5TRlXZNDfeh/AgMBAAGjZDBiMA4GA1UdDwEB/wQEAwIBBjAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ4XDT+KvHk6c/BcXEUrViwXHNCWzAgBgNVHREEGTAXhhVzcGlmZmU6Ly9kZXYtdGVhbS5vcmcwDQYJKoZIhvcNAQELBQADggEBAI/9DgHAKQFE9DoI3K3tfTFPYA3nXDFDOmH4cM4eOH/HCWh4tCeiiowIgBThGgtIROgPkqzUkp+26HMun0u5xhryAPjSQklf2Xi6GZsYq9OgQdVmKEyaxr2joYZvQ3to96ZY5wXVBxx6BSc71vqzHyy3n/4vIZfdK1mzdnpb0WCOQ8AAo3fAToTFmMgqcuudoaHKmNtNt/3f+AQw2T07lBWlX86hxFYFHPKXtKGAeLM/Q8sk1GIH049mE2yFRV4I39qW1lzyo/hW/3TsGNqvTgmj2e8+uXd4wwvQKFpIs//zpHDmueGXH3X20SbOkN1gEzZL5OlHp2XvGgfCUobTefc="
+                ]
+            },
+            {
+                "use": "jwt-svid",
+                "kty": "RSA",
+                "kid": "alYYg33czOTEu3Vin7MzvnEFaWBNUlYx",
+                "n": "1WiB2uqIISn9mv1QhM5HInjyaN1M_AG8LdVDOKrGgl-0ftKzu-nJP75-spAZYtI2y8ISJe5aERUWxp-aE-t4LnQJurg96YJQ7cPer51bqII87bpmVNNexw6OiF7cmu02u6ic1j-t_qqHxYolxZ8NdinI9KxT5LxxGSJl1mP8g1DGbvXC8hyoyk92dYoL1_AqlpzWyz69E56HrHNTtLjCWfZ773NdRxM6FkdFIoG2R6qV5mD7DuI_aXYrIjgHuTMN9IYSUBipr4b0OZn_oC07whidX9Lhts3gw4qJ17aS3DC6Jpiq9gJgZu95oP1OBVv2r1l9btXPopEXAgDE-uBO8Q",
+                "e": "AQAB"
+            }
+        ],
+        "spiffe_sequence": 1
+    }

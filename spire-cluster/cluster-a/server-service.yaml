@@ -13,6 +13,7 @@ spec:
     - name: federation
       port: 8443
       targetPort: 8443
+      nodePort: 30443  
       protocol: TCP  
   selector:
     app: spire-server

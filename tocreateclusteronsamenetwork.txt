@@ -1,0 +1,112 @@
+How to create clusters using this config
+Cluster A
+KIND_EXPERIMENTAL_DOCKER_NETWORK=kind-net-a \
+kind create cluster --name cluster-a --config kind-config.yaml
+
+Cluster B
+KIND_EXPERIMENTAL_DOCKER_NETWORK=kind-net-b \
+kind create cluster --name cluster-b --config kind-config.yaml
+
+Cluster C
+KIND_EXPERIMENTAL_DOCKER_NETWORK=kind-net-c \
+kind create cluster --name cluster-c --config kind-config.yaml
+
+
+kubectl --context=kind-cluster-a exec -n spire sts/spire-server -- \
+  /opt/spire/bin/spire-server bundle show -format spiffe > cluster-a-bundle.pem
+
+2. Add federated bundles to cluster-b
+
+Assume you already have the bundle files:
+
+cluster-a-bundle.pem → bundle from cluster-a (bb-team.org)
+
+cluster-c-bundle.pem → bundle from cluster-c (devops-team.org)
+
+Now run these commands:
+
+# Add cluster-a's bundle (bb-team.org)
+kubectl --context=kind-cluster-b exec -i -n spire sts/spire-server -- \
+  /opt/spire/bin/spire-server bundle set -format spiffe \
+  -id spiffe://bb-team.org - < cluster-a-bundle.pem
+
+# Add cluster-c's bundle (devops-team.org)
+kubectl --context=kind-cluster-b exec -i -n spire sts/spire-server -- \
+  /opt/spire/bin/spire-server bundle set -format spiffe \
+  -id spiffe://devops-team.org - < cluster-c-bundle.pem
+
+
+crooss account
+kubectl --context=kind-cluster-a exec -n spire spire-server-0 -- \
+  /opt/spire/bin/spire-server entry create \
+  -spiffeID spiffe://bb-team.org/ns/default/sa/client \
+  -parentID spiffe://bb-team.org/spire/agent \
+  -selector k8s_psat:agent_ns:default \
+  -selector k8s_psat:agent_sa:client \
+  -x509SVIDTTL 3600 \
+  -jwtSVIDTTL 3600
+
+
+
+kubectl exec -it spire-server-0 -n spire -- \
+  /opt/spire/bin/spire-server entry create \
+  -spiffeID spiffe://dev-team.org/ns/spire/sa/spire-agent \
+  -parentID spiffe://dev-team.org/spire/server \
+  -selector k8s_psat:agent_ns:spire \
+  -selector k8s_psat:agent_sa:spire-agent \
+  -federatesWith bb-team.org \
+  -downstream
+Entry ID         : 4a4c6495-c0ea-426c-a200-1d8226fe0a71
+SPIFFE ID        : spiffe://dev-team.org/ns/spire/sa/spire-agent
+Parent ID        : spiffe://dev-team.org/spire/server
+Revision         : 0
+Downstream       : true
+X509-SVID TTL    : default
+JWT-SVID TTL     : default
+Selector         : k8s_psat:agent_ns:spire
+Selector         : k8s_psat:agent_sa:spire-agent
+FederatesWith    : bb-team.org
+
+firoj@firoj-BY-OEM:~/spiffe-spire/spire-cluster/kind-spire-federation$ kubectl --context=kind-cluster-a  exec -it spire-server-0 -n spire -- \
+  /opt/spire/bin/spire-server entry create \
+  -spiffeID spiffe://bb-team.org/ns/spire/sa/spire-agent \
+  -parentID spiffe://bb-team.org/spire/server \
+  -selector k8s_psat:agent_ns:spire \
+  -selector k8s_psat:agent_sa:spire-agent \
+  -federatesWith dev-team.org \
+  -downstream
+Entry ID         : 72d2accb-1c0e-4817-8fab-cb7867833afd
+SPIFFE ID        : spiffe://bb-team.org/ns/spire/sa/spire-agent
+Parent ID        : spiffe://bb-team.org/spire/server
+Revision         : 0
+Downstream       : true
+X509-SVID TTL    : default
+JWT-SVID TTL     : default
+Selector         : k8s_psat:agent_ns:spire
+Selector         : k8s_psat:agent_sa:spire-agent
+FederatesWith    : dev-team.org
+
+
+
+
+
+kubectl exec -it client-66b944c64f-nbvxr -n default -- \
+  /opt/spire/bin/spire-agent api fetch jwt \
+  -spiffeID spiffe://dev-team.org/ns/default/sa/client \
+  -audience spiffe://bb-team.org/ns/default/sa/service \
+  -socketPath /run/spire/sockets/agent.sock \
+  -output json
+[{"svids":[{"spiffe_id":"spiffe://dev-team.org/ns/default/sa/client","svid":"eyJhbGciOiJSUzI1NiIsImtpZCI6ImxjR0kwTTVPMFBkM0hLQTJwSjZRM2tLejRmNzlmVTgwIiwidHlwIjoiSldUIn0.eyJhdWQiOlsic3BpZmZlOi8vYmItdGVhbS5vcmcvbnMvZGVmYXVsdC9zYS9zZXJ2aWNlIl0sImV4cCI6MTc2NTc5NTgxMywiaWF0IjoxNzY1Nzk1NTEzLCJzdWIiOiJzcGlmZmU6Ly9kZXYtdGVhbS5vcmcvbnMvZGVmYXVsdC9zYS9jbGllbnQifQ.J2X_e5Zlv7SZa4aZBkoF3cgpZSMiyaAhtuS9gqoHZyBJJWGxHivguNreLcayUTMBphQgJs2wJdk9Ii3Cx_Uztr4Ci0ZUacQinpvh-bmBmT6g2ai2qvAl4ZuPqQgkC4dkh4lSu2m3DN6MjSbYiBvrJdVZrxngWIhS4BKEOrYSDxzdOMbjudWc00ouHU5lAf10ioTOc3lw7uEuYu1mJBjhfQ-m3edYoh2b9c2H_HeBuBQRaZZ3l8jjGZKm9DZAesbCElPs02HfJBmZQEtSVeiQ8PDFL6wYgQSYihBrJut07YLtYqCAmbX6k4omao-t02v77-yVUAJwe8hTPdv5OEu8IA"}]},{"bundles":{"spiffe://dev-team.org":"ewogICAgImtleXMiOiBbCiAgICAgICAgewogICAgICAgICAgICAia3R5IjogIlJTQSIsCiAgICAgICAgICAgICJraWQiOiAibGNHSTBNNU8wUGQzSEtBMnBKNlEza0t6NGY3OWZVODAiLAogICAgICAgICAgICAibiI6ICJ4ODNYNEFDa1JHQUtfaHJsV082b0Q2eHRQaGQwNjVmZjltNjBWcmoxUkh6d293OVBYZWk4S2pKYjFiRWx4UXM3VENtN3ZxeU1BQUdyOGpmM3dkNEtlMUkydmpsQkwxdTRBNTdmUFpWZWowVTIzeTlXb0lQcmRqeFVLcnpsZVprbldZdGZ5MzJMYUduLWlDeV9kcHZVRmdmSmR1OWNNTUJ4aVlZWE9ka2U1SlBveTMxbUFiRkZDa183dUFxZm16RzBVYk4wMk90dzRoZzRmay1idFhpZGNTVXdMQ2NMcGZKVTVtSWFpNFZRVnIzOW1iVlZ1M2t2WFQ2dVctSXZwRWtSZ1FTaHYyRktuT1ZEVXVudmtFQTg1dWprQ09HRUVuNEpIVzNlMHlSNW5PWGJTSkpCRnNoV1dpbWx2TkhncEhhLWU4XzRIWnYyZHRMSXItZ1NZczV3Y1EiLAogICAgICAgICAgICAiZSI6ICJBUUFCIgogICAgICAgIH0KICAgIF0KfQ=="}}]
+
+
+kubectl --context=kind-cluster-a exec -it spire-server-0 -n spire -- \
+  /opt/spire/bin/spire-server bundle show -format spiffe > bb-team-bundle.pem
+
+
+bundle set command
+kubectl --context=kind-cluster-b exec -i spire-server-0 -n spire -- \
+  /opt/spire/bin/spire-server bundle set \
+  -id spiffe://bb-team.org \
+  -format spiffe \
+  -path /dev/stdin < ./bb-team-bundle.pem
+bundle set.

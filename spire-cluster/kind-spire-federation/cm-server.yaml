@@ -1,0 +1,33 @@
+apiVersion: v1
+data:
+  server.conf: "server {\n  bind_address = \"0.0.0.0\"\n  bind_port = \"8081\"\n  socket_path
+    = \"/tmp/spire-server/private/api.sock\"\n  trust_domain = \"dev-team.org\"\n
+    \ data_dir = \"/run/spire/data\"\n  log_level = \"DEBUG\"\n  ca_key_type = \"rsa-2048\"\n
+    \ ca_subject = {\n    country = [\"US\"],\n    organization = [\"SPIFFE\"],\n
+    \   common_name = \"\",\n  }\n  federation {\n    bundle_endpoint {\n      address
+    = \"0.0.0.0\"\n      port = 8443\n    }\n    federates_with \"bb-team.org\" {\n
+    \     bundle_endpoint_url = \"https://172.18.0.2:8443\"\n      bundle_endpoint_profile
+    \"https_spiffe\" {\n        endpoint_spiffe_id = \"spiffe://bb-team.org/spire/server\"\n
+    \     }\n    }\n    federates_with \"devops-team.org\" {\n      bundle_endpoint_url
+    = \"https://172.18.0.4:8443\"\n      bundle_endpoint_profile \"https_spiffe\"
+    {\n        endpoint_spiffe_id = \"spiffe://devops-team.org/spire/server\"\n      }\n
+    \   }\n  }\n}    \nplugins {\n  DataStore \"sql\" {\n    plugin_data {\n      database_type
+    = \"sqlite3\"\n      connection_string = \"/run/spire/data/datastore.sqlite3\"\n
+    \   }\n  }\n  NodeAttestor \"k8s_psat\" {\n    plugin_data {\n      clusters =
+    {\n        \"kind-cluster-b\" = {\n          service_account_allow_list = [\"spire:spire-agent\"]\n
+    \         audience = [\"spire-server\"]\n        }\n      }\n    }\n  }\n  KeyManager
+    \"disk\" {\n    plugin_data {\n      keys_path = \"/run/spire/data/keys.json\"\n
+    \   }\n  }\n  Notifier \"k8sbundle\" {\n    plugin_data {\n      namespace = \"spire\"\n
+    \     config_map = \"spire-bundle\"\n    }\n  }\n}\nhealth_checks {\n  listener_enabled
+    = true\n  bind_address = \"0.0.0.0\"\n  bind_port = \"8080\"\n  live_path = \"/live\"\n
+    \ ready_path = \"/ready\"\n}\n"
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"server.conf":"server {\n  bind_address = \"0.0.0.0\"\n  bind_port = \"8081\"\n  socket_path = \"/tmp/spire-server/private/api.sock\"\n  trust_domain = \"dev-team.org\"\n  data_dir = \"/run/spire/data\"\n  log_level = \"DEBUG\"\n  ca_key_type = \"rsa-2048\"\n  ca_subject = {\n    country = [\"US\"],\n    organization = [\"SPIFFE\"],\n    common_name = \"\",\n  }\n  federation {\n    bundle_endpoint {\n      address = \"0.0.0.0\"\n      port = 8443\n    }\n    federates_with \"bb-team.org\" {\n      bundle_endpoint_url = \"https://172.18.0.2:8443\"\n      bundle_endpoint_profile \"https_spiffe\" {\n        endpoint_spiffe_id = \"spiffe://bb-team.org/spire/server\"\n      }\n    }\n    federates_with \"devops-team.org\" {\n      bundle_endpoint_url = \"https://172.18.0.4:8443\"\n      bundle_endpoint_profile \"https_spiffe\" {\n        endpoint_spiffe_id = \"spiffe://devops-team.org/spire/server\"\n      }\n    }\n  }\n}    \nplugins {\n  DataStore \"sql\" {\n    plugin_data {\n      database_type = \"sqlite3\"\n      connection_string = \"/run/spire/data/datastore.sqlite3\"\n    }\n  }\n  NodeAttestor \"k8s_psat\" {\n    plugin_data {\n      clusters = {\n        \"kind-cluster-b\" = {\n          service_account_allow_list = [\"spire:spire-agent\"]\n          audience = [\"spire-server\"]\n        }\n      }\n    }\n  }\n  KeyManager \"disk\" {\n    plugin_data {\n      keys_path = \"/run/spire/data/keys.json\"\n    }\n  }\n  Notifier \"k8sbundle\" {\n    plugin_data {\n      namespace = \"spire\"\n      config_map = \"spire-bundle\"\n    }\n  }\n}\nhealth_checks {\n  listener_enabled = true\n  bind_address = \"0.0.0.0\"\n  bind_port = \"8080\"\n  live_path = \"/live\"\n  ready_path = \"/ready\"\n}\n"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"spire-server","namespace":"spire"}}
+  creationTimestamp: "2025-12-15T06:32:47Z"
+  name: spire-server
+  namespace: spire
+  resourceVersion: "10966"
+  uid: 0b6719f5-8abe-4ace-8237-ff05115f91f1

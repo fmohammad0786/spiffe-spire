@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"StatefulSet","metadata":{"annotations":{},"labels":{"app":"spire-server"},"name":"spire-server","namespace":"spire"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"spire-server"}},"serviceName":"spire-server","template":{"metadata":{"labels":{"app":"spire-server"},"namespace":"spire"},"spec":{"containers":[{"args":["-config","/run/spire/config/server.conf"],"image":"ghcr.io/spiffe/spire-server:1.11.2","livenessProbe":{"failureThreshold":2,"httpGet":{"path":"/live","port":8080},"initialDelaySeconds":15,"periodSeconds":60,"timeoutSeconds":3},"name":"spire-server","ports":[{"containerPort":8081,"name":"grpc"},{"containerPort":8443,"hostPort":8443,"name":"federation"},{"containerPort":8080,"name":"healthz"}],"readinessProbe":{"httpGet":{"path":"/ready","port":8080},"initialDelaySeconds":5,"periodSeconds":5},"volumeMounts":[{"mountPath":"/run/spire/config","name":"spire-config","readOnly":true},{"mountPath":"/run/spire/data","name":"spire-data","readOnly":false}]}],"securityContext":{"fsGroup":1000},"serviceAccountName":"spire-server","volumes":[{"configMap":{"name":"spire-server"},"name":"spire-config"}]}},"volumeClaimTemplates":[{"metadata":{"name":"spire-data","namespace":"spire"},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"1Gi"}}}}]}}
+  creationTimestamp: "2025-12-15T06:32:47Z"
+  generation: 5
+  labels:
+    app: spire-server
+  name: spire-server
+  namespace: spire
+  resourceVersion: "34378"
+  uid: 7868f251-42f8-460f-9437-0bf758ad5a46
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: spire-server
+  serviceName: spire-server
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/restartedAt: "2025-12-15T14:11:08+05:45"
+      labels:
+        app: spire-server
+      namespace: spire
+    spec:
+      containers:
+      - args:
+        - -config
+        - /run/spire/config/server.conf
+        image: ghcr.io/spiffe/spire-server:1.11.2
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 2
+          httpGet:
+            path: /live
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 3
+        name: spire-server
+        ports:
+        - containerPort: 8081
+          name: grpc
+          protocol: TCP
+        - containerPort: 8443
+          hostPort: 8443
+          name: federation
+          protocol: TCP
+        - containerPort: 8080
+          name: healthz
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /run/spire/config
+          name: spire-config
+          readOnly: true
+        - mountPath: /run/spire/data
+          name: spire-data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 1000
+      serviceAccount: spire-server
+      serviceAccountName: spire-server
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: spire-server
+        name: spire-config
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: spire-data
+      namespace: spire
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+      volumeMode: Filesystem
+    status:
+      phase: Pending
+status:
+  availableReplicas: 1
+  collisionCount: 0
+  currentReplicas: 1
+  currentRevision: spire-server-6874b7564f
+  observedGeneration: 5
+  readyReplicas: 1
+  replicas: 1
+  updateRevision: spire-server-6874b7564f
+  updatedReplicas: 1

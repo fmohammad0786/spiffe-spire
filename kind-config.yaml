@@ -1,0 +1,20 @@
+# kind-config.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+
+# Networking configuration
+networking:
+  # Optional: you can specify cluster CIDRs for pods/services
+  podSubnet: "10.244.0.0/16"
+  serviceSubnet: "10.96.0.0/12"
+
+nodes:
+  - role: control-plane
+
+# Uncomment below if you want worker nodes
+#  - role: worker
+#  - role: worker
+
+# Optional: Kubernetes version
+# kubernetesVersion: "v1.28.0"
+
